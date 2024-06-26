@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs,query,where } from 'firebase/firestore';
 import { db } from '../App'; 
+import { useLocation } from 'react-router-dom';
 
 function ExitProcedure() {
+  const location = useLocation();
+  const loggedInEmployeeId = location.state?.loggedInEmployeeId;
   const [exitDetails, setExitDetails] = useState([]);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10); // State for records per page
   const lastIndex = currentPage * recordsPerPage;
@@ -33,21 +35,26 @@ function ExitProcedure() {
     const fetchExitDetails = async () => {
       try {
         const exitProcedureCollection = collection(db, 'exitProcedure');
-        const exitProcedureSnapshot = await getDocs(exitProcedureCollection);
-
+        const querySnapshot = await getDocs(
+          query(exitProcedureCollection, where('assignedManagerUid', '==', loggedInEmployeeId))
+        );
+  
         const exitDetailsData = [];
-        exitProcedureSnapshot.forEach((doc) => {
+        querySnapshot.forEach((doc) => {
           exitDetailsData.push({ id: doc.id, ...doc.data() });
         });
-
+  
         setExitDetails(exitDetailsData);
       } catch (error) {
         console.error('Error fetching exit details:', error);
       }
     };
-
-    fetchExitDetails();
-  }, []);
+  
+    if (loggedInEmployeeId) {
+      fetchExitDetails();
+    }
+  }, [loggedInEmployeeId]);
+  
 
   return (
     <div className="container">
@@ -79,7 +86,7 @@ function ExitProcedure() {
               <td>{exitDetail.reasonForDeparture}</td>
               <td>{exitDetail.noticePeriod}</td>
               <td>{exitDetail.finalSettlementDetails}</td>
-              <td>{exitDetail.exitChecklist.join(', ')}</td>
+              <td>{exitDetail.exitChecklist}</td>
               <td>{exitDetail.experienceCertificate}</td>
               
             </tr>

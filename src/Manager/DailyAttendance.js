@@ -5,36 +5,29 @@ import { useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
 
 const SelectedDate = () => {
-  const [attendanceData, setAttendanceData] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [fetchDataImmediately, setFetchDataImmediately] = useState(false);
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const loggedInEmployeeId = location.state?.loggedInEmployeeId;
 
-  const fetchAttendanceData = async (loggedInEmployeeId) => {
-    try {
-      const attendanceCollectionRef = collection(db, `attendance_${loggedInEmployeeId}`);
-      const attendanceDocs = await getDocs(attendanceCollectionRef);
-      const attendanceData = attendanceDocs.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setAttendanceData(attendanceData);
-    } catch (error) {
-      console.error('Error fetching attendance data:', error);
-    }
-  };
-
   useEffect(() => {
-    fetchAttendanceData(loggedInEmployeeId);
-  }, [loggedInEmployeeId]);
+    const fetchAttendanceData = async () => {
+      if (loggedInEmployeeId) {
+        setIsLoading(true);
+        const attendanceCollectionRef = collection(db, `attendance_${loggedInEmployeeId}`);
+        const attendanceDocs = await getDocs(attendanceCollectionRef);
+        const data = attendanceDocs.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setAttendanceData(data);
+        setIsLoading(false);
+      }
+    };
 
-  useEffect(() => {
-    if (fetchDataImmediately) {
-      fetchAttendanceData(loggedInEmployeeId);
-      setFetchDataImmediately(false);
-    }
-  }, [selectedDate, fetchDataImmediately, loggedInEmployeeId]);
+    fetchAttendanceData();
+  }, [loggedInEmployeeId, selectedDate]);
 
   const handleDateChange = (event) => {
     setSelectedDate(event.target.value);
@@ -42,7 +35,7 @@ const SelectedDate = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setFetchDataImmediately(true);
+    // fetchAttendanceData is now called inside useEffect when selectedDate changes
   };
 
   const filterAttendanceDataByDate = (data, selectedDate) => {
@@ -92,31 +85,34 @@ const SelectedDate = () => {
           value={selectedDate}
           onChange={handleDateChange}
           className="mr-2"
+          max={new Date().toISOString().split('T')[0]} 
         />
-        {/* <button type="submit" className="btn btn-primary">
-          Submit
-        </button> */}
+       
       </form>
-      <table className="styled-table mt-4">
-        <thead className="thead-dark">
-          <tr>
-          <th>S.No</th>
-            <th>User Name</th>
-            <th>Status</th>
-            <th>Total Duration</th>
-          </tr>
-        </thead>
-        <tbody>
-          {records.map((attendance, index) => (
-            <tr key={index}>
-              <td>{index + 1}</td> 
-              <td>{attendance.name}</td>
-              <td>{attendance.status}</td>
-              <td>{attendance.totalDuration}</td>
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : (
+        <table className="styled-table mt-4">
+          <thead className="thead-dark">
+            <tr>
+              <th>S.No</th>
+              <th>User Name</th>
+              <th>Status</th>
+              <th>Total Duration</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {records.map((attendance, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{attendance.name}</td>
+                <td>{attendance.status}</td>
+                <td>{attendance.duration}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <nav aria-label="Page navigation example" style={{ position: "sticky", bottom: "5px", right: "10px", cursor: "pointer" }}>
         <ul className="pagination justify-content-end">
           <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>

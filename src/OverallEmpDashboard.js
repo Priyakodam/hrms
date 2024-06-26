@@ -211,17 +211,17 @@ function Dashboard({ setActivePage }) {
                 marginBottom: '20px',
                 cursor: 'pointer',
                 textAlign: 'center',
-                backgroundColor: 'white',
+                backgroundColor: '#9f9f9f',
                 borderRadius: '8px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 transition: 'background-color 0.3s ease',
               }}
               onClick={() => setActivePage('expensestable')}
             >
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
               Expenses
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
               {pendingExpenseDetails.length}
               </span>
             </div>
@@ -259,17 +259,17 @@ function Dashboard({ setActivePage }) {
                 marginBottom: '20px',
                 cursor: 'pointer',
                 textAlign: 'center',
-                backgroundColor: 'white',
+                backgroundColor: '#9f9f9f',
                 borderRadius: '8px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 transition: 'background-color 0.3s ease',
               }}
               onClick={() => setActivePage('advancesalarystatus')}
             >
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
               Salary Advances
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
               {pendingSalaryAdvanceDetails.length}
               </span>
             </div>
@@ -314,17 +314,17 @@ function Dashboard({ setActivePage }) {
                 marginBottom: '20px',
                 cursor: 'pointer',
                 textAlign: 'center',
-                backgroundColor: 'white',
+                backgroundColor: '#9f9f9f',
                 borderRadius: '8px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 transition: 'background-color 0.3s ease',
               }}
               onClick={() => setActivePage('traininglist')}
             >
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
               My Trainings
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
               {pendingTrainingDetails.length}
               </span>
             </div>

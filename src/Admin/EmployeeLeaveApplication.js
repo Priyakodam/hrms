@@ -204,7 +204,7 @@ function LeaveApplications() {
   <thead>
     <tr>
       <th>S.No</th>
-      <th>Username</th>
+      <th>Employee Name</th>
       <th>Leave Type</th>
       <th>From Date</th>
       <th>To Date</th>

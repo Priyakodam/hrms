@@ -4,6 +4,9 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from './App';
 import { Modal, Button } from 'react-bootstrap';
 import ApplyLeave from './ApplyLeave';
+import { doc, deleteDoc,getDoc } from 'firebase/firestore';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 function LeaveStatus() {
   const location = useLocation();
@@ -36,23 +39,46 @@ function LeaveStatus() {
     }
   }
 
+  const fetchLeaveApplications = async () => {
+    const leaveCollectionRef = collection(db, `leave_${loggedInEmployeeId}`);
+    const leaveDocs = await getDocs(leaveCollectionRef);
+    const leaveData = leaveDocs.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    setLeaveApplications(leaveData);
+  };
+
   useEffect(() => {
-    // Fetch leave applications based on loggedInEmployeeId
-    const fetchLeaveApplications = async () => {
-      const leaveCollectionRef = collection(db, `leave_${loggedInEmployeeId}`);
-const leaveDocs = await getDocs(leaveCollectionRef);
-      const leaveData = [];
-      leaveDocs.forEach((doc) => {
-        leaveData.push({ id: doc.id, ...doc.data() });
-      });
-
-      setLeaveApplications(leaveData);
-    };
-
     fetchLeaveApplications();
-  }, [loggedInEmployeeId]);
+  }, [loggedInEmployeeId]); // Add fetchLeaveApplications to the dependency array if you're using ESLint rules that require it
 
   const handleModal = () => setShowModal(!showModal);
+
+  const handleDelete = async (leaveId) => {
+    if (!window.confirm("Are you sure you want to delete this leave application?")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, `leave_${loggedInEmployeeId}`, leaveId));
+
+      const employeeDoc = await getDoc(doc(db, 'users', loggedInEmployeeId));
+      if (employeeDoc.exists()) {
+        const managerUid = employeeDoc.data().assignedManagerUid;
+        if (managerUid) {
+          await deleteDoc(doc(db, `leave_${managerUid}`, leaveId));
+        } else {
+          console.log("Manager UID not found for the employee.");
+        }
+      } else {
+        console.log("Employee document does not exist.");
+      }
+
+      fetchLeaveApplications(); // Now accessible
+    } catch (error) {
+      console.error("Error deleting leave application:", error);
+    }
+  };
+
 
   return (
     <div className="container">
@@ -75,6 +101,7 @@ const leaveDocs = await getDocs(leaveCollectionRef);
                 <th>To Date</th>
                 <th>Description</th>
                 <th>Status</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -86,6 +113,11 @@ const leaveDocs = await getDocs(leaveCollectionRef);
                   <td>{application.toDate}</td>
                   <td>{application.description}</td>
                   <td>{application.status}</td>
+                  <td>
+                <button className="btn btn-danger" onClick={() => handleDelete(application.id)}>
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </td>
                 </tr>
               ))}
             </tbody>

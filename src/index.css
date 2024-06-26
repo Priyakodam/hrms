@@ -21,7 +21,7 @@ code {
 .styled-table th, .styled-table td {
   border: 1px solid #ddd;
   padding: 8px;
-  text-align: center;
+  /* text-align: center; */
 }
 
 .styled-table th {
@@ -115,3 +115,26 @@ code {
 
 /* Add these styles to your existing JSX elements */
 
+.attendance_container {
+  max-width: 1000px;
+  margin: auto;
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-check {
+  width: 48%;
+  padding: 10px;
+  font-size: 18px;
+}
+/* .calendar-icon {
+  position: fixed;
+  right: 480px;
+  bottom: 4500px; 
+  top: 40%;
+
+  transform: translateY(-50%);
+} */

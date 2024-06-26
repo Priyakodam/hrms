@@ -3,15 +3,14 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../App";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignOutAlt,faBars,faL} from "@fortawesome/free-solid-svg-icons";
-import DailyAttendance from "../Manager/DailyAttendance"; 
+import { faSignOutAlt, faBars } from "@fortawesome/free-solid-svg-icons";
+import DailyAttendance from "../Manager/DailyAttendance";
 import MonthlyAttendanceReport from "../Manager/MonthlyAttendanceReport";
 import LeaveApplication from "../Manager/LeaveApplication";
 import ManagerAttendance from "../Manager/ManagerAttendance";
 import ManagerViewLeave from "../Manager/ManagerViewLeave";
 import EmployeeProfile from '../EmployeeProfile';
 import logo from "../Img/logohrms.png";
-// import OverallDashboard from "./OverallDashboard";
 import EmployeesList from "../Manager/EmployeesList";
 import ManagerMonthlyAttendance from "../Manager/ManagerMonthlyAttendance";
 import HRManagerNumbers from './HRManagerNumbers';
@@ -20,7 +19,27 @@ import OnBoarding  from "./OnBoarding";
 import Positions from "./Positions";
 import ViewPolicy from './ViewPolicy';
 import AnnualHRBudget from "./AnnualHRBudget";
-
+import PerformanceReport from "../Manager/PerformanceReport";
+import ExpensesApproval from "../Manager/ExpensesApproval";
+import PayoutDisbursements from "../Manager/PayoutDisbursements";
+import LoanApproval from "../Manager/LoanApproval";
+import AdvanceSalaryApplication from "../Manager/AdvanceSalaryApplication";
+import FinalSettlement from "../Manager/FinalSettlement";
+import Payslip from "../Manager/Payslip";
+import ManagerExpensesStatus from "../Manager/ManagerExpensesStatus";
+import ManagerFinalSettlementStatus from "../Manager/ManagerFinalSettlementStatus";
+import ManagerSalaryAdvanceStatus from "../Manager/ManagerSalaryAdvanceStatus";
+import ManagerLoanStatus from "../Manager/ManagerLoanStatus";
+import ManagerPayslip from "../Manager/ManagerPayslip";
+import ManPowerTable from "../Manager/ManPowerTable";
+import ManagerTrainingList from '../Manager/ManagerTrainingList';
+import TrainingRequest from'../Manager/TrainingRequest';
+import TrainingEvaluationReport from '../Manager/TrainingEvaluationReport'
+import ReviewReportFromEmployee from '../Manager/ReviewReportFromEmployee';
+import ManagerCommunication from '../Manager/ManagerCommunication';
+import ExitProcedure from '../Manager/ExitProcedure';
+import ManagerMonthlyReport from "../Manager/ManagerMonthlyReport";
+import EmpMonthlyAttendanceReport from "../Manager/EmpMonthlyAttendanceReport";
 function ManagerDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,8 +49,11 @@ function ManagerDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activePage, setActivePage] = useState("overalldashboard");
   const sidebarHeight = window.innerHeight - 70;
-  const [showAttendance, setShowAttendance] =useState(false);
- 
+  const [showAttendance, setShowAttendance] = useState(false);
+  const [showEmployeePayroll, setShowEmployeePayroll] = useState(false);
+  const [showManagerPayroll, setShowManagerPayroll] =useState(false);
+  const [showTrainingAndDevelopment, setShowTrainingAndDevelopment] =useState(false);
+  const [showHROperation, setShowHROperation] =useState(false);
 
   useEffect(() => {
     const fetchEmployeeDetails = async () => {
@@ -42,7 +64,6 @@ function ManagerDashboard() {
           const employeeData = doc.data();
           if (doc.id === loggedInEmployeeId) {
             setLoggedInEmployeeName(employeeData.fullName);
-            console.log("Name=",employeeData.fullName)
           }
         });
       } catch (error) {
@@ -57,12 +78,17 @@ function ManagerDashboard() {
     // Close the current dropdown if it's already open
     if (dropdownSetter === setShowAttendance && showAttendance) {
       setShowAttendance(false);
-    } else {
-      // Close all other dropdowns and non-dropdown elements
+    } else if (dropdownSetter === setShowEmployeePayroll && showEmployeePayroll) {
+      setShowEmployeePayroll(false);
+    } else if (dropdownSetter === setShowManagerPayroll && showManagerPayroll) {
+      setShowManagerPayroll(false);
+    }else if (dropdownSetter === setShowTrainingAndDevelopment && showTrainingAndDevelopment) {
+      setShowTrainingAndDevelopment(false);
+    }else if (dropdownSetter === setShowHROperation && showHROperation) {
+      setShowHROperation(false);
+    }else {
       resetAllDropdowns();
-      // Toggle the current dropdown
       dropdownSetter((prevState) => !prevState);
-      // Set the active page to the default page if provided
       if (defaultPage) {
         setActivePage(defaultPage);
       }
@@ -70,50 +96,94 @@ function ManagerDashboard() {
   };
 
   const handleAttendanceAndLeave = () => {
-    toggleDropdown(setShowAttendance,"managerattendance");
+    toggleDropdown(setShowAttendance, "managerattendance");
   };
 
- 
+  const handleEmployeePayroll = () => {
+    toggleDropdown(setShowEmployeePayroll, "payslip");
+  };
+  const handleManagerPayroll = () => {
+    toggleDropdown(setShowManagerPayroll,"managerpayslip");
+  };
 
+  const handleTrainingandDevelopment = () => {
+    toggleDropdown(setShowTrainingAndDevelopment,"managertraininglist");
+  };
+
+  
+  const handleHROperation = () => {
+    toggleDropdown(setShowHROperation,"managercommunication");
+  };
 
   const handleLogout = () => {
     navigate("/");
   };
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   const handlePageChange = (page) => {
     setActivePage(page);
-    
     resetAllDropdowns();
-    
-    if (page.includes("Attendance&Leave") || page === "managerattendance" || page === "managermonthlyattendance"|| page === "dailyattendance" || page === "monthlyattendancereport" || page === "managerattendance" || page === "managerviewleave" || page === "leaveApplication") {
+    if (
+      page.includes("Attendance&Leave") || page === "managerattendance" || page === "managermonthlyattendance" || page === "managermonthlyreport"|| page === "dailyattendance" || page === "monthlyattendancereport" || page === "empmonthlyattendacereport" || page === "managerattendance" || page === "managerviewleave" || page === "leaveApplication"
+    ) {
       setShowAttendance(true);
+    } else if (
+      page.includes("EmployeePayroll") ||
+      page === "payslip" ||
+      page === "expensesapproval" ||
+      page === "payoutdisbursements" ||
+      page === "loanapproval" ||
+      page === "finalsettlement" ||
+      page === "advancesalaryapplication"
+    ) {
+      setShowEmployeePayroll(true);
+    }else if (page.includes("ManagerPayroll") || page === "managerpayslip" || page === "expensesstatus" || page === "loanstatus" || page === "finalsettlementstatus" || page === "salaryadvancestatus" ) {
+      setShowManagerPayroll(true);
+    }else if (page.includes("T&D") || page === "managertraininglist" || page === "trainingrequest" || page === "trainingevaluationreport" || page === "reviewreportfromemployee" ) {
+      setShowTrainingAndDevelopment(true);
+    } else if (page.includes("HROperation") || page.includes("managercommunication")|| page.includes("exitprocedure")) {
+      setShowHROperation(true);
     } 
-   
   };
 
-  const resetAllDropdowns = () => {  
-    setShowAttendance(false);  
-   
+  const resetAllDropdowns = () => {
+    setShowAttendance(false);
+    setShowEmployeePayroll(false);
+    setShowManagerPayroll(false);
+    setShowHROperation(false); 
+    setShowTrainingAndDevelopment(false);
   };
 
-  const menuItemStyle = (page) => ({
-    padding: "10px", // Keep the padding for top, right, and bottom
+  const menuItemStyle = (page, showTrainingAndDevelopment) => ({
+    padding: "10px",
     paddingLeft: isSidebarOpen ? "20px" : "10px",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     width: '100%',
-    fontWeight: 
-    (showAttendance && page === "Attendance&Leave")  ? "bold" : activePage === page ? "bold" : "normal",
-    backgroundColor: activePage === page ? "white" : ((showAttendance && page === "Attendance&Leave")  ? "lightgrey" : "transparent"),
-    color:(showAttendance && page === "Attendance&Leave")  ? "#182566" : (activePage === page ? "#182566" : "white"),
+    fontWeight: (showTrainingAndDevelopment && page === "T&D") ||
+      (showEmployeePayroll && page === "EmployeePayroll") ||
+      (showManagerPayroll && page === "ManagerPayroll") ||
+      (showHROperation && page === "HROperation") ||
+      (showAttendance && page === "Attendance&Leave") ? "bold" : activePage === page ? "bold" : "normal",
+    backgroundColor: activePage === page ? "white" : ((showAttendance && page === "Attendance&Leave") ||
+      (showTrainingAndDevelopment && page === "T&D") ||
+      (showEmployeePayroll && page === "EmployeePayroll") ||
+      (showManagerPayroll && page === "ManagerPayroll") ||
+      (showHROperation && page === "HROperation") ? "lightgrey" : "transparent"),
+    color: (showTrainingAndDevelopment && page === "T&D") ||
+      (showEmployeePayroll && page === "EmployeePayroll") ||
+      (showManagerPayroll && page === "ManagerPayroll") ||
+      (showHROperation && page === "HROperation") ||
+      (showAttendance && page === "Attendance&Leave") ? "#182566" : (activePage === page ? "#182566" : "white"),
     transition: "background-color 0.1s, color 0.1s",
     border: "none",
     borderRadius: '20px'
   });
+  
 
   
   return (
@@ -215,6 +285,7 @@ function ManagerDashboard() {
           >
             {isSidebarOpen && " Annual HRBudget"}
           </li>
+          
           <ul onClick={handleAttendanceAndLeave} 
           style={{
             ...menuItemStyle("Attendance&Leave"),
@@ -242,12 +313,24 @@ function ManagerDashboard() {
         >
           My Monthly Attendance
         </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("managermonthlyreport"); }}
+          style={{ ...menuItemStyle("managermonthlyreport"), color: activePage === "managermonthlyreport" ? "#182566" : "black", backgroundColor: activePage === "managermonthlyreport" ? "white" : "transparent" }}
+        >
+          My Monthly Report
+        </li>
 
           <li
           onClick={(e) => { e.stopPropagation(); handlePageChange("dailyattendance"); }}
           style={{ ...menuItemStyle("dailyattendance"), color: activePage === "dailyattendance" ? "#182566" : "black", backgroundColor: activePage === "dailyattendance" ? "white" : "transparent" }}
         >
           Employee DailyAttendance
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("empmonthlyattendacereport"); }}
+          style={{ ...menuItemStyle("empmonthlyattendacereport"), color: activePage === "empmonthlyattendacereport" ? "#182566" : "black", backgroundColor: activePage === "empmonthlyattendacereport" ? "white" : "transparent" }}
+        >
+          Employee MonthlyAttendance Report
         </li>
         <li
           onClick={(e) => { e.stopPropagation(); handlePageChange("monthlyattendancereport"); }}
@@ -271,7 +354,197 @@ function ManagerDashboard() {
     </div>
   )}
           </ul>
-         
+          <li
+            onClick={() => handlePageChange("performancereport")}
+            style={{
+              ...menuItemStyle("performancereport"),
+              
+            }}
+          >
+            {isSidebarOpen && "Performance Report"}
+          </li>
+          <ul onClick={handleEmployeePayroll} 
+          style={{
+            ...menuItemStyle("EmployeePayroll"),
+            flexDirection: showEmployeePayroll && isSidebarOpen ? "column" : "row",
+            margin: 0, // Remove any margin
+          }}
+          >
+            <span>
+        {isSidebarOpen && 'EmployeePayroll'}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {showEmployeePayroll ? null : <span>&#9660;</span>}
+        </span>
+      {showEmployeePayroll && isSidebarOpen && (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginTop:'10px',marginLeft: "5px", }}>
+          <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("payslip"); }}
+          style={{ ...menuItemStyle("payslip"), color: activePage === "payslip" ? "#182566" : "black", backgroundColor: activePage === "payslip" ? "white" : "transparent" }}
+        >
+          Payslip
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("expensesapproval"); }}
+          style={{ ...menuItemStyle("expensesapproval"), color: activePage === "expensesapproval" ? "#182566" : "black", backgroundColor: activePage === "expensesapproval" ? "white" : "transparent" }}
+        >
+           Expenses
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("payoutdisbursements"); }}
+          style={{ ...menuItemStyle("payoutdisbursements"), color: activePage === "payoutdisbursements" ? "#182566" : "black", backgroundColor: activePage === "payoutdisbursements" ? "white" : "transparent" }}
+        >
+          Payout
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("loanapproval"); }}
+          style={{ ...menuItemStyle("loanapproval"), color: activePage === "loanapproval" ? "#182566" : "black", backgroundColor: activePage === "loanapproval" ? "white" : "transparent" }}
+        >
+          Loan
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("finalsettlement"); }}
+          style={{ ...menuItemStyle("finalsettlement"), color: activePage === "finalsettlement" ? "#182566" : "black", backgroundColor: activePage === "finalsettlement" ? "white" : "transparent" }}
+        >
+         FinalSettlement
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("advancesalaryapplication"); }}
+          style={{ ...menuItemStyle("advancesalaryapplication"), color: activePage === "advancesalaryapplication" ? "#182566" : "black", backgroundColor: activePage === "advancesalaryapplication" ? "white" : "transparent" }}
+        >
+         SalaryAdvance
+        </li>
+          </div>
+    </div>
+  )}
+          </ul>
+          <ul onClick={handleManagerPayroll} 
+        style={{
+          ...menuItemStyle("ManagerPayroll"),
+          flexDirection: showManagerPayroll && isSidebarOpen ? "column" : "row",
+          margin: 0, // Remove any margin
+        }}
+        >
+        <span>
+        {isSidebarOpen && 'ManagerPayroll'}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {showManagerPayroll ? null : <span>&#9660;</span>}
+        </span>
+      {showManagerPayroll && isSidebarOpen && (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginTop:'10px',marginLeft: "5px", }}>
+          <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("managerpayslip"); }}
+          style={{ ...menuItemStyle("managerpayslip"), color: activePage === "managerpayslip" ? "#182566" : "black", backgroundColor: activePage === "managerpayslip" ? "white" : "transparent" }}
+        >
+          Payslip
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("expensesstatus"); }}
+          style={{ ...menuItemStyle("expensesstatus"), color: activePage === "expensesstatus" ? "#182566" : "black", backgroundColor: activePage === "expensesstatus" ? "white" : "transparent" }}
+        >
+           Expenses
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("loanstatus"); }}
+          style={{ ...menuItemStyle("loanstatus"), color: activePage === "loanstatus" ? "#182566" : "black", backgroundColor: activePage === "loanstatus" ? "white" : "transparent" }}
+        >
+          Loan
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("finalsettlementstatus"); }}
+          style={{ ...menuItemStyle("finalsettlementstatus"), color: activePage === "finalsettlementstatus" ? "#182566" : "black", backgroundColor: activePage === "finalsettlementstatus" ? "white" : "transparent" }}
+        >
+          FinalSettlement
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("salaryadvancestatus"); }}
+          style={{ ...menuItemStyle("salaryadvancestatus"), color: activePage === "salaryadvancestatus" ? "#182566" : "black", backgroundColor: activePage === "salaryadvancestatus" ? "white" : "transparent" }}
+        >
+          SalaryAdvance
+        </li>
+          </div>
+    </div>
+  )}
+          </ul>
+          <li
+            onClick={() => handlePageChange("manpowertable")}
+            style={menuItemStyle("manpowertable")}
+          >
+            {isSidebarOpen && "ManPowerRequest"}
+          </li>
+          <ul onClick={handleTrainingandDevelopment} 
+          style={{
+            ...menuItemStyle("T&D"),
+            flexDirection: showTrainingAndDevelopment && isSidebarOpen ? "column" : "row",
+            margin: 0, // Remove any margin
+          }}
+          >
+            <span>
+        {isSidebarOpen && 'T&D'}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {showTrainingAndDevelopment ? null : <span>&#9660;</span>}
+        </span>
+      {showTrainingAndDevelopment && isSidebarOpen && (
+       <div style={{ display: 'flex', flexDirection: 'column' }}>
+       <div style={{ marginTop:'10px',marginLeft: "5px", }}>
+          <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("managertraininglist"); }}
+          style={{ ...menuItemStyle("managertraininglist"), color: activePage === "managertraininglist" ? "#182566" : "black", backgroundColor: activePage === "managertraininglist" ? "white" : "transparent" }}
+        >
+          ScheduledTraining
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("trainingrequest"); }}
+          style={{ ...menuItemStyle("trainingrequest"), color: activePage === "trainingrequest" ? "#182566" : "black", backgroundColor: activePage === "trainingrequest" ? "white" : "transparent" }}
+        >
+           TrainingRequest
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("trainingevaluationreport"); }}
+          style={{ ...menuItemStyle("trainingevaluationreport"), color: activePage === "trainingevaluationreport" ? "#182566" : "black", backgroundColor: activePage === "trainingevaluationreport" ? "white" : "transparent" }}
+        >
+          EvaluationReport
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("reviewreportfromemployee"); }}
+          style={{ ...menuItemStyle("reviewreportfromemployee"), color: activePage === "reviewreportfromemployee" ? "#182566" : "black", backgroundColor: activePage === "reviewreportfromemployee" ? "white" : "transparent" }}
+        >
+          EmployeeFeeback
+        </li> 
+          </div>
+    </div>
+  )}
+        </ul>
+      <ul onClick={handleHROperation} 
+      style={{
+        ...menuItemStyle("HROperation"),
+        flexDirection: showHROperation && isSidebarOpen ? "column" : "row",
+        margin: 0, // Remove any margin
+      }}
+      >
+      <span>
+        {isSidebarOpen && 'HROperation'}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        {showHROperation ? null : <span>&#9660;</span>}
+      </span>
+      {showHROperation && isSidebarOpen && (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginTop:'10px',marginLeft: "5px", }}>
+          
+
+          <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("managercommunication"); }}
+          style={{ ...menuItemStyle("managercommunication"), color: activePage === "managercommunication" ? "#182566" : "black", backgroundColor: activePage === "managercommunication" ? "white" : "transparent" }}
+        >
+          Communication
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("exitprocedure"); }}
+          style={{ ...menuItemStyle("exitprocedure"), color: activePage === "exitprocedure" ? "#182566" : "black", backgroundColor: activePage === "exitprocedure" ? "white" : "transparent" }}
+        >
+         Exit details
+        </li>
+          </div>
+    </div>
+  )}
+      </ul>
           </div>
 
         <div
@@ -298,10 +571,32 @@ function ManagerDashboard() {
           {activePage === "employees" && <EmployeesList loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName} />}
           {activePage === "managerattendance" && <ManagerAttendance />}
           {activePage === "managermonthlyattendance" && <ManagerMonthlyAttendance />}
+          {activePage === "managermonthlyreport" && <ManagerMonthlyReport />}
           {activePage === "managerviewleave" && <ManagerViewLeave />}
           {activePage === "dailyattendance" && <DailyAttendance />}
           {activePage === "monthlyattendancereport" && <MonthlyAttendanceReport />}
+          {activePage === "empmonthlyattendacereport" && <EmpMonthlyAttendanceReport />}
           {activePage === "leaveApplication" && <LeaveApplication />}
+          {activePage === "performancereport" && <PerformanceReport />}
+          {activePage === "payslip" && <Payslip />}
+          {activePage === "expensesapproval" && <ExpensesApproval />}
+          {activePage === "payoutdisbursements" && <PayoutDisbursements />}
+          {activePage === "loanapproval" && <LoanApproval />}
+          {activePage === "advancesalaryapplication" && <AdvanceSalaryApplication />}
+          {activePage === "finalsettlement" && <FinalSettlement />}
+          {activePage === "expensesstatus" && <ManagerExpensesStatus />}
+          {activePage === "finalsettlementstatus" && <ManagerFinalSettlementStatus />}
+          {activePage === "salaryadvancestatus" && <ManagerSalaryAdvanceStatus />}
+          {activePage === "loanstatus" && <ManagerLoanStatus />}
+          {activePage === "managerpayslip" && <ManagerPayslip />}
+          {activePage === "manpowertable" && <ManPowerTable />}
+          {activePage === "managertraininglist" && <ManagerTrainingList loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName}/>}
+          {activePage === "trainingrequest" && <TrainingRequest loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName}/>}
+          {activePage === "trainingevaluationreport" && <TrainingEvaluationReport  loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName}/>}
+          {activePage === "reviewreportfromemployee" && <ReviewReportFromEmployee loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName} />}
+          {activePage === "managercommunication" && <ManagerCommunication loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName} />} 
+          {activePage === "exitprocedure" && <ExitProcedure loggedInEmployeeId={loggedInEmployeeId} loggedInEmployeeName={loggedInEmployeeName} />}
+          
           </div>
      
       </div>

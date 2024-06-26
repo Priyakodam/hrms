@@ -48,6 +48,7 @@ function ManagersList() {
       <thead>
           <tr>
             <th>S.No</th>
+            <th>Employee Id</th>
             <th>Name</th>
             <th>Email</th>
             <th>Mobile</th>
@@ -58,6 +59,7 @@ function ManagersList() {
         {records.map((manager, index) => ( 
             <tr key={manager.uid}>
               <td>{index + 1}</td> 
+              <td>{manager.employeeId}</td>
               <td>{manager.fullName}</td>
               <td>{manager.email}</td>
               <td>{manager.mobile}</td>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, addDoc, Timestamp, onSnapshot, orderBy, query,where } from 'firebase/firestore';
+import { collection, getDocs, addDoc, Timestamp, onSnapshot, orderBy, query, where,getDoc,doc } from 'firebase/firestore';
 import { db } from '../App';
-import { Form } from 'react-bootstrap';
+import { Form, Dropdown, DropdownButton } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { useLocation } from 'react-router-dom'; 
+import '../Employeecommunication.css';
 
 function EmployeeCommunication() {
   const location = useLocation();  
@@ -14,50 +15,56 @@ function EmployeeCommunication() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState('');
+  const [departments, setDepartments] = useState([]); // State to store departments
+  const [selectedDepartment, setSelectedDepartment] = useState('');
 
   useEffect(() => {
-    const fetchEmployeeDetails = async () => {
+    const fetchLoggedInEmployeeDetails = async () => {
       try {
-        const employeesRef = collection(db, 'users');
-        const querySnapshot = await getDocs(employeesRef);
-        querySnapshot.forEach((doc) => {
-          const employeeData = doc.data();
-          if (doc.id === loggedInEmployeeId) {
-            setLoggedInEmployeeName(employeeData.fullName);
-            console.log("Name=",employeeData.fullName)
-          }
-        });
+        const docRef = doc(db, 'users', loggedInEmployeeId);
+        const docSnap = await getDoc(docRef);
+  
+        if (docSnap.exists()) {
+          const employeeData = docSnap.data();
+          setLoggedInEmployeeName(employeeData.fullName);
+        } else {
+          console.log("No such document for logged-in employee!");
+        }
       } catch (error) {
-        console.error('Error fetching employee details:', error);
+        console.error('Error fetching logged in employee details:', error);
       }
     };
-
-    fetchEmployeeDetails();
-  }, [loggedInEmployeeId]);
   
+    const fetchDepartments = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, 'departments'));
+        const fetchedDepartments = querySnapshot.docs.map(doc => doc.data().name);
+        setDepartments(fetchedDepartments);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+      }
+    };
+  
+    // Execute both fetch operations
+    fetchLoggedInEmployeeDetails();
+    fetchDepartments();
+  }, [loggedInEmployeeId]); // Dependency on loggedInEmployeeId since it's used in fetching employee details
+  
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const q = query(collection(db, 'users'), where('role', '==', 'Employee'), where('assignedManager', '==', loggedInEmployeeName));
         const querySnapshot = await getDocs(q);
-        const usersData = querySnapshot.docs
-          .map(doc => {
-            const userData = { id: doc.id, ...doc.data() };
-            console.log('User ID:', userData.id); // Log user ID to the console
-            return userData;
-          })
-          .filter(user => user.fullName !== loggedInEmployeeName);
-  
+        const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(user => user.fullName !== loggedInEmployeeName);
         setUsers(usersData);
       } catch (error) {
         console.error('Error fetching users: ', error);
       }
     };
-  
+
     fetchUsers();
   }, [loggedInEmployeeName]);
-  
-  
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -91,20 +98,17 @@ function EmployeeCommunication() {
   const handleUserSelection = (userId) => {
     const selectedUserData = users.find(user => user.id === userId);
     setSelectedUser(selectedUserData);
-    if (selectedUserData) {
-      console.log('Selected User UID:', selectedUserData.id);
-    }
   };
 
   const handleSendMessage = async (message) => {
-    if (selectedUser) {
+    if (message.trim() && selectedUser) { // Check if the message is not just whitespace
       try {
         const userToSelectedUserChatCollection = collection(db, `Chats_${loggedInEmployeeId}_${selectedUser.id}`);
         const selectedUserToUserChatCollection = collection(db, `Chats_${selectedUser.id}_${loggedInEmployeeId}`);
 
         const messageData = {
           sender: loggedInEmployeeName,
-          content: message,
+          content: message.trim(), // Trim the message to ensure it's not empty
           timestamp: Timestamp.now(),
         };
 
@@ -118,11 +122,43 @@ function EmployeeCommunication() {
     }
   };
 
+  useEffect(() => {
+    // Adapted from the first code snippet to include department filtering
+    const fetchUsers = async () => {
+      try {
+        let usersQuery;
+        if (selectedDepartment) {
+          usersQuery = query(collection(db, 'users'), where('department', '==', selectedDepartment));
+        } else {
+          usersQuery = query(collection(db, 'users'), where('role', '==', 'Employee'));
+        }
+        const querySnapshot = await getDocs(usersQuery);
+        const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(user => user.fullName !== loggedInEmployeeName);
+        setUsers(usersData);
+      } catch (error) {
+        console.error('Error fetching users: ', error);
+      }
+    };
+
+    fetchUsers();
+  }, [loggedInEmployeeName, selectedDepartment]); // Include selectedDepartment in dependencies array
+
+  const handleDepartmentChange = (eventKey) => {
+    setSelectedDepartment(eventKey);
+  };
+
+
+
   return (
     <div className="d-flex">
-      {/* Sidebar with user names */}
       <div className="sidebar">
         <h3>Users</h3>
+        <DropdownButton id="department-dropdown" title="Department" onSelect={handleDepartmentChange}>
+          <Dropdown.Item eventKey="">All Departments</Dropdown.Item>
+          {departments.map((department, index) => (
+            <Dropdown.Item eventKey={department} key={index}>{department}</Dropdown.Item>
+          ))}
+        </DropdownButton>
         <ul>
           {users.map((user) => (
             <li
@@ -136,7 +172,6 @@ function EmployeeCommunication() {
         </ul>
       </div>
 
-      {/* Chat window */}
       <div className="chat-window">
         {selectedUser && (
           <div>
@@ -152,9 +187,7 @@ function EmployeeCommunication() {
                   borderRadius: '8px',
                   margin: '8px',
                 }}>
-                <strong>
-                  {/* {msg.sender}: */}
-                  </strong> {msg.content}
+                {msg.content}
               </div>
               ))}
             </div>

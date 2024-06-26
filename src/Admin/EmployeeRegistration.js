@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { Modal, Button } from "react-bootstrap";
 import {
   doc,
   setDoc,
@@ -8,6 +9,7 @@ import {
   getDocs,
   query,
   where,
+  addDoc,
 } from "firebase/firestore";
 import {
   getStorage,
@@ -18,10 +20,47 @@ import {
 import { auth, db } from "../App";
 import { useNavigate } from "react-router-dom";
 
+function DepartmentModal({
+  showModal,
+  setShowModal,
+  newDepartment,
+  setNewDepartment,
+  handleAddDepartment,
+}) {
+  return (
+    <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal.Header closeButton>
+        <Modal.Title>Add New Department</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Department Name"
+          value={newDepartment}
+          onChange={(e) => setNewDepartment(e.target.value)}
+        />
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={() => setShowModal(false)}>
+          Close
+        </Button>
+        <Button variant="primary" onClick={handleAddDepartment}>
+          Save Changes
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+}
+
 function EmployeeRegistration() {
+  const [showModal, setShowModal] = useState(false);
+  const [newDepartment, setNewDepartment] = useState("");
+  const [departments, setDepartments] = useState([]);
+
   const history = useNavigate();
 
-  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -79,11 +118,10 @@ function EmployeeRegistration() {
   useEffect(() => {
     validateForm();
     fetchEmployeeCount();
-    if (selectedRole === 'Employee' && selectedDepartment) {
+    if (selectedRole === "Employee" && selectedDepartment) {
       fetchManagerNames(selectedDepartment);
     }
   }, [fullName, email, password, mobile, selectedRole, selectedDepartment]);
-
 
   const handleRoleChange = (e) => {
     setSelectedRole(e.target.value);
@@ -97,9 +135,9 @@ function EmployeeRegistration() {
   const fetchManagerNames = async (department) => {
     try {
       const q = query(
-        collection(db, 'users'), 
-        where('role', '==', 'Manager'),
-        where('department', '==', department) // Filter by department
+        collection(db, "users"),
+        where("role", "==", "Manager"),
+        where("department", "==", department) // Filter by department
       );
       const querySnapshot = await getDocs(q);
       const data = querySnapshot.docs.map((doc) => ({
@@ -108,10 +146,9 @@ function EmployeeRegistration() {
       }));
       setManagerData(data);
     } catch (error) {
-      console.error('Error fetching manager data:', error);
+      console.error("Error fetching manager data:", error);
     }
   };
-
 
   const fetchEmployeeCount = async () => {
     try {
@@ -136,7 +173,6 @@ function EmployeeRegistration() {
     setIsSubmitting(true);
 
     try {
-      // Create a new user with email and password
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -144,12 +180,10 @@ function EmployeeRegistration() {
       );
       const user = userCredential.user;
 
-      // Update user profile with the full name
       await updateProfile(user, {
         displayName: fullName,
       });
 
-      // Get the selected manager's data
       const selectedManagerData = managerData.find(
         (manager) => manager.fullName === selectedManager
       );
@@ -157,30 +191,26 @@ function EmployeeRegistration() {
         ? selectedManagerData.uid
         : "";
 
-      // Upload the photo and resume to Firebase Storage and get their download URLs
       const photoUrl = photo ? await handleFileUpload(photo, "photos") : "";
       const resumeUrl = resume ? await handleFileUpload(resume, "resumes") : "";
 
-      // Store the new user's data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         fullName,
         email,
-        password,
         mobile,
-        department: selectedDepartment,
         role: selectedRole,
         assignedManager: selectedManager,
+        department: selectedDepartment,
         assignedManagerUid,
         employeeId,
         timestamp: Timestamp.fromDate(new Date()),
         education,
         specialisation,
-        resume: resumeUrl, // Store the resume URL
+        resume: resumeUrl,
         fatherName,
         dob,
         gender,
-        // phoneNo,
-        photo: photoUrl, // Store the photo URL
+        photo: photoUrl,
         address,
         accountHolderName,
         accountNumber,
@@ -190,14 +220,88 @@ function EmployeeRegistration() {
         ifsc,
       });
 
+      // Prepare the email content
+//       const emailContent = {
+//         to_email: email,
+//         subject: "Employee Registration",
+//         message: `Employee Credentials.\n\nFull Name: ${fullName}\nEmail: ${email}\nPassword: ${password}\nMobile: ${mobile}\nRole: ${selectedRole}\n\nYou can login by using this URL: https://iiiqbetshrms.web.app/ `,
+//       };
+// console.log("emailContent=",emailContent)
+      
+//       const response = await fetch("https://kodamharish.pythonanywhere.com/form_data_send_mail", {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify(emailContent),
+//       });
+
+//       if (!response.ok) {
+//         window.alert("Failed to send email");
+//       }
+
       window.alert("Registered Successfully!!!");
+
+      // Reset form state variables after successful registration
+      resetForm();
     } catch (error) {
       console.error("Error during signup:", error);
       setErrorMsg("An error occurred during signup. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
   };
+
+  const resetForm = () => {
+    setFullName("");
+    setEmail("");
+    setPassword("");
+    setMobile("");
+    setPasswordError("");
+    setSelectedRole("");
+    setSelectedManager("");
+    setManagerData([]);
+    setErrorMsg("");
+    setFormValid(false);
+    setIsSubmitting(false);
+    setEmployeeId("");
+    setEducation("");
+    setSpecialisation("");
+    setFatherName("");
+    setDob("");
+    setGender("");
+    setPhoto(null);
+    setResume(null);
+    setAddress("");
+    setAccountHolderName("");
+    setAccountNumber("");
+    setBank("");
+    setBranch("");
+    setAadhaarNumber("");
+    setIfsc("");
+  };
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const querySnapshot = await getDocs(collection(db, "departments"));
+      const fetchedDepartments = querySnapshot.docs.map(
+        (doc) => doc.data().name
+      );
+      setDepartments(fetchedDepartments);
+    };
+    fetchDepartments();
+  }, []);
+
+  // Handle new department submission
+  const handleAddDepartment = async () => {
+    if (newDepartment) {
+      await addDoc(collection(db, "departments"), { name: newDepartment });
+      setDepartments((prev) => [...prev, newDepartment]); // Optimistically update the UI
+      setNewDepartment(""); // Reset the input field
+      setShowModal(false); // Close the modal
+    }
+  };
+
+  // Modal component for adding a new department
 
   return (
     <div className="container ">
@@ -382,29 +486,44 @@ function EmployeeRegistration() {
             </div>
             <div className="row">
               <div className="col-md-6">
-              <div className="mb-3">
-  <label htmlFor="department" className="form-label">Department</label>
-  <select
-    className="form-select"
-    id="department"
-    name="department"
-    value={selectedDepartment}
-    onChange={(e) => {
-      setSelectedDepartment(e.target.value);
-      if (selectedRole === 'Employee') {
-        fetchManagerNames(e.target.value); 
-      }
-    }}
-    required
-  >
-    <option value="" disabled>Select Department</option>
-    <option value="Development">Development</option>
-    <option value="HR Team">HR Team</option>
-    <option value="Testing">Testing</option>
-    <option value="Training and Development">Training and Development</option> {/* New option added */}
-  </select>
-</div>
-
+                <div className="mb-3">
+                  <label htmlFor="department" className="form-label">
+                    Department
+                  </label>
+                  <div className="input-group mb-3">
+                    <select
+                      className="form-select"
+                      id="department"
+                      name="department"
+                      value={selectedDepartment}
+                      onChange={(e) => setSelectedDepartment(e.target.value)}
+                      required
+                    >
+                      <option value="" disabled>
+                        Select Department
+                      </option>
+                      {departments.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className="btn btn-outline-secondary"
+                      type="button"
+                      onClick={() => setShowModal(true)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <DepartmentModal
+                    showModal={showModal}
+                    setShowModal={setShowModal}
+                    newDepartment={newDepartment}
+                    setNewDepartment={setNewDepartment}
+                    handleAddDepartment={handleAddDepartment}
+                  />
+                </div>
               </div>
             </div>
 
@@ -458,7 +577,6 @@ function EmployeeRegistration() {
                 </div>
               )}
             </div>
-           
           </div>
         </div>
 

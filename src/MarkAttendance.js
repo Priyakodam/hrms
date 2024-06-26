@@ -1,188 +1,245 @@
 import React, { useState, useEffect } from 'react';
-import { collection, doc, setDoc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from './App'; // Import your Firestore database configuration
+import { doc, setDoc, getDoc, Timestamp, collection, getDocs } from 'firebase/firestore';
+import { db } from './App'; // Adjust this import to your actual file structure
 import { Button } from 'react-bootstrap';
 import { useLocation } from 'react-router-dom';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { FaCalendarAlt } from 'react-icons/fa';
 
-const MarkAttendance = () => {
+const ManagerMarkAttendance = () => {
   const location = useLocation();
   const loggedInEmployeeId = location.state?.loggedInEmployeeId;
-  const loggedInEmployeeName = location.state?.loggedInEmployeeName;
-
+  const [loggedInEmployeeName, setLoggedInEmployeeName] = useState('');
+  const [assignedManagerUid, setAssignedManagerUid] = useState('');
   const [name, setName] = useState(loggedInEmployeeName || '');
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [checkInTime, setCheckInTime] = useState(null);
+  const [checkOutTime, setCheckOutTime] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const toFirebaseTimestamp = (date) => {
-    return Timestamp.fromDate(date);
-  };
-
-  const fromFirebaseTimestamp = (timestamp) => {
-    return timestamp.toDate();
-  };
-
-  const handleUserNameChange = (event) => {
-    setName(event.target.value);
-  };
-
-  const updateAttendanceInDB = async (records, status) => {
-    if (!loggedInEmployeeId) {
-      console.error('User not authenticated');
-      return;
-    }
-
-    setIsLoading(true);
-    const currentDate = new Date().toISOString().split('T')[0];
-
-    // Retrieve the user document to get the assigned manager UID
-    const userDocRef = doc(db, 'users', loggedInEmployeeId);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-      const loggedInEmployee = userDocSnap.data();
-      const assignedManagerUid = loggedInEmployee.assignedManagerUid;
-
-      // Update employee's attendance
-      const employeeAttendanceCollection = collection(db, `attendance_${loggedInEmployeeId}`);
-      const employeeDateDoc = doc(employeeAttendanceCollection, `${currentDate}_${loggedInEmployeeId}`);
-
-      const totalDurationHours = calculateTotalDurationInHours(records);
-      const formattedTotalDuration = formatDuration(totalDurationHours);
-      const isPresent = totalDurationHours >= 8;
-
-      const recordsForFirebase = records.map((record) => ({
-        checkIn: record.checkIn ? toFirebaseTimestamp(record.checkIn) : null,
-        checkOut: record.checkOut ? toFirebaseTimestamp(record.checkOut) : null,
-      }));
-
-      try {
-        // Update employee's attendance
-        await setDoc(employeeDateDoc, {
-          name: name,
-          records: recordsForFirebase,
-          totalDuration: formattedTotalDuration,
-          status: status, // Use the passed status
-          employeeUid: loggedInEmployeeId,
-        });
-      
-        // Update assigned manager's attendance
-        if (assignedManagerUid) {
-          const managerAttendanceCollection = collection(db, `attendance_${assignedManagerUid}`);
-          const managerDateDoc = doc(managerAttendanceCollection, `${currentDate}_${loggedInEmployeeId}`);
-      
-          try {
-            await setDoc(managerDateDoc, { // Use managerDateDoc here
-              name: name,
-              records: recordsForFirebase,
-              totalDuration: formattedTotalDuration,
-              status: status, // Use the passed status
-              employeeUid: loggedInEmployeeId,
-            });
-          } catch (error) {
-            console.error('Error updating manager attendance data:', error);
-          }
-        }
-      } catch (error) {
-        console.error('Error updating employee attendance data:', error);
-      }   
-     } else {
-      console.error('User not found');
-    }
-
-    setIsLoading(false);
-  };
-
-  const handleCheckIn = () => {
-    const newRecords = [...attendanceRecords, { checkIn: new Date(), checkOut: null }];
-    setAttendanceRecords(newRecords);
-    updateAttendanceInDB(newRecords, 'P').then(() => { // Set status as 'P' on check-in
-      window.alert('Successfully logged in!');
-    });
-  };
-  
-  const handleCheckOut = () => {
-    const newRecords = [...attendanceRecords];
-    const lastIndex = newRecords.length - 1;
-    if (lastIndex >= 0 && !newRecords[lastIndex].checkOut) {
-      newRecords[lastIndex].checkOut = new Date();
-      setAttendanceRecords(newRecords);
-      const totalDurationHours = calculateTotalDurationInHours(newRecords);
-      const attendanceStatus = totalDurationHours >= 8 ? 'P' : 'A'; // Update status based on total duration
-      updateAttendanceInDB(newRecords, attendanceStatus).then(() => {
-        window.alert(`Successfully logged out! Status: ${attendanceStatus}`);
-      });
-    }
-  };
-
-  const calculateStatus = (records) => {
-    const totalDurationHours = calculateTotalDurationInHours(records);
-    return totalDurationHours >= 8;
-  };
-
-  const formatDuration = (durationHours) => {
-    if (durationHours < 1) {
-      // Convert to minutes and round off
-      const minutes = Math.round(durationHours * 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-    } else {
-      // Round to two decimal places for hours
-      const hoursRounded = Math.round(durationHours * 100) / 100;
-      return `${hoursRounded} hour${hoursRounded !== 1 ? 's' : ''}`;
-    }
-  };
-
-  const calculateTotalDurationInHours = (records) => {
-    return records.reduce((total, record) => {
-      if (record.checkIn && record.checkOut) {
-        const checkIn = record.checkIn instanceof Date ? record.checkIn : fromFirebaseTimestamp(record.checkIn);
-        const checkOut = record.checkOut instanceof Date ? record.checkOut : fromFirebaseTimestamp(record.checkOut);
-        return total + (checkOut - checkIn) / (1000 * 60 * 60); // Convert to hours
-      }
-      return total;
-    }, 0);
-  };
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [status, setStatus] = useState('');
+  const [duration, setDuration] = useState('');
 
   useEffect(() => {
-    if (loggedInEmployeeId) {
-      const currentDate = new Date().toISOString().split('T')[0];
-      const attendanceCollection = collection(db, `attendance_${loggedInEmployeeId}`);
-      const dateDoc = doc(attendanceCollection, `${currentDate}_${loggedInEmployeeId}`);
+    const fetchEmployeeDetails = async () => {
+      try {
+        const employeesRef = collection(db, 'users');
+        const querySnapshot = await getDocs(employeesRef);
+        querySnapshot.forEach((doc) => {
+          const employeeData = doc.data();
+          if (doc.id === loggedInEmployeeId) {
+            setLoggedInEmployeeName(employeeData.fullName);
+            setAssignedManagerUid(employeeData.assignedManagerUid);
+            console.log("ManagerUid=", employeeData.assignedManagerUid);
+            console.log("Name=", employeeData.fullName);
+          }
+        });
+      } catch (error) {
+        console.error('Error fetching employee details:', error);
+      }
+    };
 
-      getDoc(dateDoc).then((docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const existingAttendance = docSnapshot.data();
-          const recordsWithDates = existingAttendance.records.map((record) => ({
-            checkIn: record.checkIn ? fromFirebaseTimestamp(record.checkIn) : null,
-            checkOut: record.checkOut ? fromFirebaseTimestamp(record.checkOut) : null,
-          }));
-          setAttendanceRecords(recordsWithDates);
-        }
-      });
-    }
+    fetchEmployeeDetails();
   }, [loggedInEmployeeId]);
 
+  useEffect(() => {
+    const timerID = setInterval(() => {
+      if (checkInTime && !checkOutTime) {
+        const now = new Date();
+        if (now.getDate() !== checkInTime.getDate() || now.getMonth() !== checkInTime.getMonth() || now.getFullYear() !== checkInTime.getFullYear()) {
+          const endOfDay = new Date(checkInTime);
+          endOfDay.setHours(23, 59, 59, 999);
+          const elapsed = endOfDay - checkInTime;
+          setDuration(formatDuration(elapsed));
+        } else {
+          const elapsed = now - checkInTime;
+          setDuration(formatDuration(elapsed));
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(timerID);
+  }, [checkInTime, checkOutTime]);
+
+  useEffect(() => {
+    fetchAttendanceRecord();
+  }, [selectedDate, loggedInEmployeeId]);
+
+  const fetchAttendanceRecord = async () => {
+    const formattedDate = selectedDate.toISOString().split('T')[0];
+    const docId = `${formattedDate}_${loggedInEmployeeId}`;
+    const attendanceDocRef = doc(db, `attendance_${loggedInEmployeeId}`, docId);
+    const docSnap = await getDoc(attendanceDocRef);
+
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const checkIn = data.checkIn ? fromFirebaseTimestamp(data.checkIn) : null;
+      const checkOut = data.checkOut ? fromFirebaseTimestamp(data.checkOut) : null;
+      setCheckInTime(checkIn);
+      setCheckOutTime(checkOut);
+      setStatus(data.status);
+      if (checkIn && checkOut) {
+        const durationMillis = checkOut.getTime() - checkIn.getTime();
+        setDuration(formatDuration(durationMillis));
+      } else {
+        setDuration('');
+      }
+    } else {
+      resetState();
+    }
+  };
+
+  const resetState = () => {
+    setCheckInTime(null);
+    setCheckOutTime(null);
+    setStatus('');
+    setDuration('');
+  };
+
+  const toFirebaseTimestamp = (date) => Timestamp.fromDate(date);
+  const fromFirebaseTimestamp = (timestamp) => timestamp.toDate();
+
+  const formatDuration = (milliseconds) => {
+    const seconds = Math.floor((milliseconds / 1000) % 60);
+    const minutes = Math.floor((milliseconds / (1000 * 60)) % 60);
+    const hours = Math.floor((milliseconds / (1000 * 60 * 60)));
+    return `${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  const handleCheckIn = async () => {
+    if (checkInTime) {
+      alert('Already checked in for today.');
+      return;
+    }
+    const now = new Date();
+    setCheckInTime(now);
+    setIsLoading(true);
+    setStatus('P');
+    await updateAttendanceInDB(now, null, 'P');
+    setIsLoading(false);
+    alert('Successfully checked in!');
+  };
+
+  const handleCheckOut = async () => {
+    if (!checkInTime) {
+      alert('Cannot check out without checking in.');
+      return;
+    }
+    if (checkOutTime) {
+      alert('Already checked out for today.');
+      return;
+    }
+    const now = new Date();
+    setCheckOutTime(now);
+    setIsLoading(true);
+    const durationMillis = now.getTime() - checkInTime.getTime();
+    const durationHours = durationMillis / (1000 * 60 * 60);
+    const finalStatus = durationHours >= 8 ? 'P' : 'A';
+    setStatus(finalStatus);
+    setDuration(formatDuration(durationMillis));
+    await updateAttendanceInDB(checkInTime, now, finalStatus);
+    setIsLoading(false);
+    alert(`Successfully checked out! Status: ${finalStatus}`);
+  };
+
+  const updateAttendanceInDB = async (checkIn, checkOut, status) => {
+    const formattedDate = selectedDate.toISOString().split('T')[0];
+    const employeeDocId = `${formattedDate}_${loggedInEmployeeId}`;
+    const managerDocId = `${formattedDate}_${assignedManagerUid}`;
+  
+    const employeeAttendanceDocRef = doc(db, `attendance_${loggedInEmployeeId}`, employeeDocId);
+    const managerAttendanceDocRef = doc(db, `attendance_${assignedManagerUid}`, managerDocId);
+  
+    const attendanceData = {
+      name: loggedInEmployeeName, // Storing the employee name
+      checkIn: checkIn ? toFirebaseTimestamp(checkIn) : null,
+      checkOut: checkOut ? toFirebaseTimestamp(checkOut) : null,
+      status,
+      duration,
+      employeeUid: loggedInEmployeeId,
+    };
+  
+    try {
+      await setDoc(employeeAttendanceDocRef, attendanceData);
+      await setDoc(managerAttendanceDocRef, attendanceData);
+    } catch (error) {
+      console.error('Error updating attendance data:', error);
+    }
+  };
+  
+  
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
+
+  const CustomInput = React.forwardRef(({ value, onClick }, ref) => (
+    <button className="custom-datepicker-input form-control" onClick={onClick} ref={ref}>
+      {value} <FaCalendarAlt />
+    </button>
+  ));
+
+  const isToday = new Date().toDateString() === selectedDate.toDateString();
+  const isCheckInDisabled = checkInTime || isLoading || !isToday;
+  const isCheckOutDisabled = !checkInTime || checkOutTime || isLoading || !isToday;
+
   return (
-    <div>
-    <h2>Mark Attendance</h2>
-    <div>
-      <Button
-        variant="success"
-        onClick={handleCheckIn}
-        disabled={isLoading || (attendanceRecords.length > 0 && !attendanceRecords[attendanceRecords.length - 1].checkOut)}
-      >
-        Mark Check-In
-      </Button>
-      { " "}
-      <Button
-        variant="warning"
-        onClick={handleCheckOut}
-        disabled={isLoading || !attendanceRecords.length || attendanceRecords[attendanceRecords.length - 1].checkOut}
-      >
-        Mark Check-Out
-      </Button>
-    </div>
-  </div>
-);
+    <>
+      <div className='attendance_container'>
+        <h2 style={{ color: '#150981', textAlign: 'center', marginTop: '10px' }}>Mark Attendance</h2>
+        {status && (
+          <div style={{ marginBottom: '5px', marginTop: '5px' }}>
+            <p style={{ color: status === 'P' ? 'green' : 'red', textAlign: 'center', fontWeight: 'bold' }}>
+              {status === 'P' ? 'Present' : 'Absent'}
+            </p>
+          </div>
+        )}
+        <div id="status" className="mb-4" style={{ display: 'flex', justifyContent: 'center' }}>
+          <Button variant="success" onClick={handleCheckIn} disabled={isCheckInDisabled}
+            style={{ width: '18%', padding: '10px', fontSize: '18px', marginRight: '10px' }}>
+            Check-In
+          </Button>
+          <Button variant="danger" onClick={handleCheckOut} disabled={isCheckOutDisabled}
+            style={{ width: '18%', padding: '10px', fontSize: '18px' }}>
+            Check-Out
+          </Button>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+          <label style={{ marginRight: '10px', marginTop: '5px', fontSize: '18px' }}>Select Date:</label>
+          <DatePicker 
+            selected={selectedDate} 
+            onChange={handleDateChange} 
+            dateFormat="dd/MM/yyyy"
+            className="form-control"
+            customInput={<CustomInput />}
+            maxDate={new Date()} // Disable future dates
+          />
+        </div>
+        <div style={{ marginTop: '20px' }}>
+          <table className="styled-table">
+            <thead>
+              <tr>
+                {/* <th>Name</th> */}
+                <th>Check-In Time</th>
+                <th>Check-Out Time</th>
+                <th>Duration</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                {/* <td>{loggedInEmployeeName}</td> */}
+                <td>{checkInTime ? checkInTime.toLocaleTimeString() : '-'}</td>
+                <td>{checkOutTime ? checkOutTime.toLocaleTimeString() : '-'}</td>
+                <td>{duration}</td>
+                <td>{status === 'P' ? 'Present' : 'Absent'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  );
 };
 
-export default MarkAttendance;
+export default ManagerMarkAttendance;

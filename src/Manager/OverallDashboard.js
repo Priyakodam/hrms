@@ -203,17 +203,17 @@ function OverallDashboard({ setActivePage }) {
                 marginBottom: '20px',
                 cursor: 'pointer',
                 textAlign: 'center',
-                backgroundColor: 'white',
+                backgroundColor: '#9f9f9f',
                 borderRadius: '8px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 transition: 'background-color 0.3s ease',
               }}
               onClick={handleLeavesClick}
             >
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                 EmployeeLeaves
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
                 {leaveCount}
               </span>
             </div>
@@ -251,17 +251,17 @@ function OverallDashboard({ setActivePage }) {
                 marginBottom: '20px',
                 cursor: 'pointer',
                 textAlign: 'center',
-                backgroundColor: 'white',
+                backgroundColor: '#9f9f9f',
                 borderRadius: '8px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 transition: 'background-color 0.3s ease',
               }}
               onClick={handleLRequestsClick}
             >
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
               Requested Trainings
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
               {trainingRequestsCount}
               </span>
             </div>
@@ -299,17 +299,17 @@ function OverallDashboard({ setActivePage }) {
                 marginBottom: '20px',
                 cursor: 'pointer',
                 textAlign: 'center',
-                backgroundColor: 'white',
+                backgroundColor: '#9f9f9f',
                 borderRadius: '8px',
                 boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
                 transition: 'background-color 0.3s ease',
               }}
               onClick={handleLSalaryAdvancesClick}
             >
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                 Salary Advance
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
               {salaryAdvanceCount}
               </span>
             </div>

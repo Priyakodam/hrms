@@ -1,10 +1,12 @@
 // ExpenseReportsTable.js
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc ,deleteDoc  } from 'firebase/firestore';
 import { db } from '../App';
 import { Modal, Button } from 'react-bootstrap';
 import ManagerExpenses from './ManagerExpenses';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 function ExpenseReportsTable() {
   const location = useLocation();
@@ -27,6 +29,12 @@ function ExpenseReportsTable() {
   }, [loggedInEmployeeId]);
 
 
+  const handleDelete = async (reportId) => {
+    if (window.confirm("Are you sure you want to delete this expense report?")) {
+      await deleteDoc(doc(db, `managerexpenses_${loggedInEmployeeId}`, reportId));
+      setExpenseReports(expenseReports.filter(report => report.id !== reportId));
+    }
+  };
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -54,7 +62,7 @@ function ExpenseReportsTable() {
                 <th>Description</th>
                 <th>Receipt URL</th>
                 <th>Status</th>
-                
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -70,7 +78,11 @@ function ExpenseReportsTable() {
                     </a>
                   </td>
                   <td style={{ ...getStatusStyle(report.status) }}>{report.status}</td>
-                  
+                  <td>
+                    <Button variant="danger" size="sm" onClick={() => handleDelete(report.id)} className="btn-icon">
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

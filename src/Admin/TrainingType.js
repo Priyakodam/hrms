@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
-import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy,deleteDoc,doc,updateDoc } from 'firebase/firestore';
 import { db } from '../App';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faPen, faPlus } from "@fortawesome/free-solid-svg-icons";
+
+
 
 function TrainingType() {
   const [showAddRoleModal, setShowAddRoleModal] = useState(false);
@@ -13,6 +15,7 @@ function TrainingType() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [duration, setDuration] = useState('');
+  const [durationUnit, setDurationUnit] = useState('select');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [trainingEvaluation, setTrainingEvaluation] = useState([]);
   const [trainingTypes, setTrainingTypes] = useState([]);
@@ -20,12 +23,17 @@ function TrainingType() {
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [recordsPerPage, setRecordsPerPage] = useState(10); // State for records per page
+  const [recordsPerPage, setRecordsPerPage] = useState(10);
+  const [typeError, setTypeError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredTrainingTypes, setFilteredTrainingTypes] = useState([]);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingTrainingId, setEditingTrainingId] = useState(null);
 
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
-  const records = trainingTypes.slice(firstIndex, lastIndex);
-  const npage = Math.ceil(trainingTypes.length / recordsPerPage);
+  const records = (filteredTrainingTypes.length > 0 ? filteredTrainingTypes : trainingTypes).slice(firstIndex, lastIndex);
+  const npage = Math.ceil((filteredTrainingTypes.length > 0 ? filteredTrainingTypes.length : trainingTypes.length) / recordsPerPage);
   const numbers = [...Array(npage + 1).keys()].slice(1);
 
   function prePage() {
@@ -50,8 +58,12 @@ function TrainingType() {
     setDescription('');
     setStatus('');
     setDuration('');
+    setDurationUnit('select');
     setStartDate('');
     setEndDate('');
+    setTypeError('');
+    setIsEditMode(false);
+    setEditingTrainingId(null);
   }
 
   const fetchTrainingEvaluation = async () => {
@@ -74,68 +86,104 @@ function TrainingType() {
   useEffect(() => {
     fetchTrainingEvaluation();
   }, []);
-  
+
   const handleOpenAddRoleModal = () => setShowAddRoleModal(true);
+
+  const validateTrainingTitle = (title) => {
+    // Allow alphanumeric characters including numbers, but ensure at least one letter is present
+    const alphanumericPattern = /^(?=.*[a-zA-Z])[a-zA-Z0-9\s]*$/;
+    return alphanumericPattern.test(title);
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
+    if (!validateTrainingTitle(type)) {
+      setTypeError('Training Title should only contain letters and spaces.');
+      setIsSubmitting(false);
+      return;
+    } else {
+      setTypeError('');
+    }
+
     try {
-      // Fetch the selected training conduction data
       const selectedTrainingConductionData = trainingEvaluation.find(
         (evaluation) => evaluation.id === selectedTrainingConduction
       );
-  
-      // Fetch the selected trainer's data
+
       const selectedTrainerData = trainers.find(
         (trainer) => trainer.id === selectedTrainer
       );
-  
-      // Add the training type data to Firestore
-      const docRef = await addDoc(collection(db, 'trainingtype'), {
-        type,
-        description,
-        status,
-        duration,
-        startDate,
-        endDate,
-        trainingConduction: selectedTrainingConductionData?.parameter || '',
-        trainer: selectedTrainerData?.fullName || '', // Include the selected trainer's name
-      });
-  
-      console.log('Training Type added with ID: ', docRef.id);
-  
+
+      const timestamp = new Date().toLocaleString();
+
+      if (isEditMode && editingTrainingId) {
+        // Update existing training type
+        const trainingDocRef = doc(db, 'trainingtype', editingTrainingId);
+        await updateDoc(trainingDocRef, {
+          type,
+          description,
+          status,
+          duration,
+          durationUnit,
+          startDate,
+          endDate,
+          trainingConduction: selectedTrainingConductionData?.parameter || '',
+          trainer: selectedTrainerData?.fullName || '',
+          timestamp: timestamp,
+        });
+        console.log('Training Type updated with ID: ', editingTrainingId);
+      } else {
+        // Add new training type
+        const docRef = await addDoc(collection(db, 'trainingtype'), {
+          type,
+          description,
+          status,
+          duration,
+          durationUnit,
+          startDate,
+          endDate,
+          trainingConduction: selectedTrainingConductionData?.parameter || '',
+          trainer: selectedTrainerData?.fullName || '',
+          timestamp: timestamp,
+        });
+        console.log('Training Type added with ID: ', docRef.id);
+      }
+
       setType('');
       setDescription('');
       setStatus('');
       setDuration('');
+      setDurationUnit('select');
       setStartDate('');
       setEndDate('');
       setSelectedTrainingConduction('');
       setSelectedTrainer('');
       handleCloseAddRoleModal();
       fetchTrainingTypes();
-      window.alert('Training added Successfully');
+      window.alert(isEditMode ? 'Training updated Successfully' : 'Training added Successfully');
     } catch (error) {
-      console.error('Error adding training type: ', error);
+      console.error('Error adding/updating training type: ', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const fetchTrainingTypes = async () => {
     try {
-      const querySnapshot = await getDocs(collection(db, 'trainingtype'));
-      const typesData = [];
-      querySnapshot.forEach((doc) => {
-        typesData.push({ id: doc.id, ...doc.data() });
-      });
+      const q = query(collection(db, 'trainingtype'), orderBy('timestamp', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const typesData = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
       setTrainingTypes(typesData);
     } catch (error) {
       console.error('Error fetching training types: ', error);
@@ -144,7 +192,7 @@ function TrainingType() {
 
   useEffect(() => {
     fetchTrainingTypes();
-  }, [formatDate]);
+  }, []);
 
   useEffect(() => {
     const fetchManagersInDevelopment = async () => {
@@ -153,36 +201,103 @@ function TrainingType() {
         const usersData = querySnapshot.docs
           .map(doc => {
             const userData = { id: doc.id, ...doc.data() };
-            console.log('User ID:', userData.id); // Log user ID to the console
+            console.log('User ID:', userData.id);
             return userData;
           })
           .filter(user => user.department === 'Training and Development');
 
-          setTrainers(usersData);
+        setTrainers(usersData);
       } catch (error) {
         console.error('Error fetching users: ', error);
       }
     };
-  
+
     fetchManagersInDevelopment();
   }, []);
 
+  const getCurrentDate = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  // Function to filter training types based on search query
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = trainingTypes.filter(type =>
+      type.type.toLowerCase().includes(query) ||
+      type.description.toLowerCase().includes(query) ||
+      type.trainer.toLowerCase().includes(query) ||
+      formatDate(type.startDate).includes(query) ||
+      formatDate(type.endDate).includes(query) ||
+      type.duration.toLowerCase().includes(query) ||
+      type.trainingConduction.toLowerCase().includes(query)
+    );
+    setFilteredTrainingTypes(filtered);
+    setCurrentPage(1); // Reset pagination to the first page when searching
+  };
+
+  
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this training type?');
+    if (confirmDelete) {
+      try {
+        await deleteDoc(doc(db, 'trainingtype', id));
+        console.log('Training Type deleted with ID: ', id);
+        fetchTrainingTypes();
+        window.alert('Training Type deleted Successfully');
+      } catch (error) {
+        console.error('Error deleting training type: ', error);
+      }
+    }
+  };
+  
+  const handleEdit = (id) => {
+    const trainingToEdit = trainingTypes.find(training => training.id === id);
+    if (trainingToEdit) {
+      setType(trainingToEdit.type);
+      setDescription(trainingToEdit.description);
+      setStatus(trainingToEdit.status);
+      setDuration(trainingToEdit.duration);
+      setDurationUnit(trainingToEdit.durationUnit);
+      setStartDate(trainingToEdit.startDate);
+      setEndDate(trainingToEdit.endDate);
+      setSelectedTrainingConduction(trainingEvaluation.find(evaluation => evaluation.parameter === trainingToEdit.trainingConduction)?.id || '');
+      setSelectedTrainer(trainers.find(trainer => trainer.fullName === trainingToEdit.trainer)?.id || '');
+      setIsEditMode(true);
+      setEditingTrainingId(id);
+      setShowAddRoleModal(true);
+    }
+  };
+  
+
   return (
     <div>
-       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
         <h3>Training Type</h3>
-        <div>
-          <button className="btn btn-primary" onClick={handleOpenAddRoleModal} style={{ marginRight: '10px' }}>+ Add</button>
-        </div>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+  <input
+    type="text"
+    className="form-control"
+    placeholder="Search..."
+    onChange={handleSearch}
+    style={{ width: '150px', marginRight: '10px' }}
+  />
+  <button className="btn btn-primary" onClick={handleOpenAddRoleModal} style={{ marginRight: '10px' }}>+ Add</button>
+</div>
+
       </div>
 
       <Modal show={showAddRoleModal} onHide={handleCloseAddRoleModal} size="lg">
-        <Modal.Header closeButton>
-          {/* <Modal.Title>Add Role</Modal.Title> */}
+      <Modal.Header closeButton>
+          {/* <Modal.Title>{isEditMode ? 'Edit Training Type' : 'Add Training Type'}</Modal.Title> */}
         </Modal.Header>
         <Modal.Body>
           <form onSubmit={handleSubmit}>
-            <h4 className='text-center'> Add Training Type</h4>
+            <h4 className='text-center'> {isEditMode ? 'Edit Training Type' : 'Add Training Type'}</h4>
             <div className="mb-3">
               <label htmlFor="type" className="form-label">Training Title</label>
               <input
@@ -254,6 +369,7 @@ function TrainingType() {
                   name="startDate"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  min={getCurrentDate()}
                   required
                 />
               </div>
@@ -266,11 +382,13 @@ function TrainingType() {
                   name="endDate"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate || getCurrentDate()}
                   required
                 />
               </div>
             </div>
-            <div className="mb-3">
+            <div className='row mb-3'>
+            <div className="col">
               <label htmlFor="duration" className="form-label">Training Duration</label>
               <input
                 type="text"
@@ -281,6 +399,21 @@ function TrainingType() {
                 onChange={(e) => setDuration(e.target.value)}
                 required
               />
+            </div>
+            <div className="col">
+              <label htmlFor="duration" className="form-label">Duration Unit</label>
+              <select
+                  className="form-select"
+                  value={durationUnit}
+                  onChange={(e) => setDurationUnit(e.target.value)}
+                  style={{ marginLeft: '10px' }}
+                >
+                   <option value="select"disabled>Select</option>
+                  <option value="hours">Hour</option>
+                  <option value="week">Week</option>
+                  <option value="days">Days</option>
+                </select>
+            </div>
             </div>
             <div className="text-center">
               <Button variant="danger" onClick={handleCloseAddRoleModal} style={{ marginRight: '2px' }}>Close</Button>
@@ -304,22 +437,32 @@ function TrainingType() {
             <th>End Date</th>
             <th>Training Duration</th>
             <th>Training Conduction</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
-          {records.map((trainingType, index) => (
-            <tr key={trainingType.id}>
-              <td>{index + 1}</td>
-              <td>{trainingType.type}</td>
-              <td>{trainingType.description}</td>
-              <td>{trainingType.trainer}</td>
-              <td>{formatDate(trainingType.startDate)}</td>
-              <td>{formatDate(trainingType.endDate)}</td>
-              <td>{trainingType.duration}</td>
-              <td>{trainingType.trainingConduction}</td>
-            </tr>
-          ))}
-        </tbody>
+  {records.map((trainingType, index) => (
+    <tr key={trainingType.id}>
+      <td>{firstIndex + index + 1}</td>
+      <td>{trainingType.type}</td>
+      <td>{trainingType.description}</td>
+      <td>{trainingType.trainer}</td>
+      <td>{formatDate(trainingType.startDate)}</td>
+      <td>{formatDate(trainingType.endDate)}</td>
+      <td>{trainingType.duration} {trainingType.durationUnit}</td>
+      <td>{trainingType.trainingConduction}</td>
+      <td>
+      <Button variant="info" onClick={() => handleEdit(trainingType.id)}>
+                    <FontAwesomeIcon icon={faPen} />
+                  </Button>{' '}
+        <Button variant="danger" onClick={() => handleDelete(trainingType.id)}>
+          <FontAwesomeIcon icon={faTrash} />
+        </Button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
       </table>
       <nav aria-label="Page navigation example" style={{ position: "sticky", bottom: "5px", right: "10px", cursor: "pointer" }}>
         <ul className="pagination justify-content-end">

@@ -46,13 +46,13 @@ function ExitProcedure({ loggedInEmployeeId }) {
   }, [loggedInEmployeeId]);
   
 
-  const handleExitChecklistChange = (option, isChecked) => {
-    if (isChecked) {
-      setExitChecklist([...exitChecklist, option]);
-    } else {
-      setExitChecklist(exitChecklist.filter((item) => item !== option));
-    }
-  };
+  // const handleExitChecklistChange = (option, isChecked) => {
+  //   if (isChecked) {
+  //     setExitChecklist([...exitChecklist, option]);
+  //   } else {
+  //     setExitChecklist(exitChecklist.filter((item) => item !== option));
+  //   }
+  // };
 
   const [isFormComplete, setIsFormComplete] = useState(false);
 
@@ -117,7 +117,7 @@ function ExitProcedure({ loggedInEmployeeId }) {
       setNoticePeriod('');
       setClearanceStatus('');
       setFinalSettlementDetails('');
-      setExitChecklist([]);
+      setExitChecklist('');
       setExperienceCertificate('');
       setExitProcessStatus('');
 
@@ -184,26 +184,50 @@ function ExitProcedure({ loggedInEmployeeId }) {
         </div>
 
         <div className="row">
-        <div className="col-md-6">
+        {/* <div className="col-md-6">
   <label>Exit Checklist:</label>
   <div style={{ marginTop: '10px' }}>
     <label style={{ marginRight: '10px' }}>
       <input
-        type="checkbox"
-        checked={exitChecklist.includes("Option1")}
-        onChange={(e) => handleExitChecklistChange("Option1", e.target.checked)}
+        type="radio"
+        checked={exitChecklist.includes("Yes")}
+        onChange={(e) => handleExitChecklistChange("Yes", e.target.checked)}
       />
-      Option 1
+      YES
     </label>
     <label>
       <input
-        type="checkbox"
-        checked={exitChecklist.includes("Option2")}
-        onChange={(e) => handleExitChecklistChange("Option2", e.target.checked)}
+        type="radio"
+        checked={exitChecklist.includes("No")}
+        onChange={(e) => handleExitChecklistChange("No", e.target.checked)}
       />
-      Option 2
+      NO
     </label>
-    {/* Add more checkboxes as needed */}
+    
+  </div>
+</div> */}
+
+<div className="col-md-6">
+  <label>Assets Submission:</label>
+  <div style={{ marginTop: '10px' }}>
+    <label>
+      <input
+        type="radio"
+        value="Yes"
+        checked={exitChecklist === "Yes"}
+        onChange={(e) => setExitChecklist(e.target.value)}
+      />
+      Yes
+    </label>
+    <label style={{ marginLeft: '10px' }}>
+      <input
+        type="radio"
+        value="No"
+        checked={exitChecklist === "No"}
+        onChange={(e) => setExitChecklist(e.target.value)}
+      />
+      No
+    </label>
   </div>
 </div>
 

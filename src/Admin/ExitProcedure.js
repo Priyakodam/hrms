@@ -63,7 +63,7 @@ function ExitProcedure() {
             <th>Reason for Departure</th>
             <th>Notice Period</th>
             <th>Final Settlement Details</th>
-            <th>Exit Checklist</th>
+            <th>Assets Submitted</th>
             <th>Experience Certificate</th> 
           </tr>
         </thead>
@@ -78,7 +78,7 @@ function ExitProcedure() {
               <td>{exitDetail.reasonForDeparture}</td>
               <td>{exitDetail.noticePeriod}</td>
               <td>{exitDetail.finalSettlementDetails}</td>
-              <td>{exitDetail.exitChecklist.join(', ')}</td>
+              <td>{exitDetail.exitChecklist}</td>
               <td>{exitDetail.experienceCertificate}</td>
               
             </tr>

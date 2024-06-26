@@ -53,9 +53,12 @@ function EmployeeTrainingList({}) {
           fetchEmployeeDetails();
         }, [loggedInEmployeeId]);
   
-      const formatDate = (dateString) => {
-          const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-          return new Date(dateString).toLocaleDateString(undefined, options);
+        const formatDate = (dateString) => {
+          const date = new Date(dateString);
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
         };
       
   
@@ -127,7 +130,7 @@ function EmployeeTrainingList({}) {
                 <tbody>
                     {records.map((training, index) => (
                         <tr key={training.id}>
-                            <td>{index + 1}</td>
+                            <td>{firstIndex + index + 1}</td>
                             <td>{training.trainingType}</td>
                             <td>{training.trainer}</td>
                             <td>{training.assignedBy}</td>

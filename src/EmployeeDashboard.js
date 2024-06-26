@@ -1,4 +1,4 @@
-// Import necessary components
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
@@ -6,7 +6,7 @@ import { db } from './App';
 import logo from './Img/logohrms.png';
 import MarkAttendance from './MarkAttendance';
 import Expenses from './Expenses';
-import ViewLeave from './ViewLeave'; // Add this line
+import ViewLeave from './ViewLeave'; 
 import EmployeeReport from './EmployeeReport'; 
 import EmployeePayslip from './EmployeePayslip';
 import ExpensesTable from './ExpensesTable';
@@ -31,6 +31,8 @@ import OverallEmpDashboard from './OverallEmpDashboard';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSignOutAlt,faBars,faL} from "@fortawesome/free-solid-svg-icons";
 import EmployeeMonthlyAttendance from './EmployeeMonthlyAttendance';
+import EmployeeMonthlyReport from './EmployeeMonthlyReport';
+import Holidays from './HolidaysList';
 
 function EmployeeDashboard() {
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ function EmployeeDashboard() {
           const fetchedEmployeeData = doc.data();
           if (doc.id === loggedInEmployeeId) {
             setLoggedInEmployeeName(fetchedEmployeeData.fullName);
-            setEmployeeData(fetchedEmployeeData); // Set employeeData in state
+            setEmployeeData(fetchedEmployeeData); 
             console.log("Name=", fetchedEmployeeData.fullName);
             console.log("assignedManagerUid=", fetchedEmployeeData.assignedManagerUid);
             console.log("employeeData=", fetchedEmployeeData);
@@ -223,10 +225,22 @@ function EmployeeDashboard() {
             {isSidebarOpen && "Monthly Attendance"}
           </li>
           <li
+            onClick={() => handlePageChange("monthlyReport")}
+            style={menuItemStyle("monthlyReport")}
+          >
+            {isSidebarOpen && "Monthly Report"}
+          </li>
+          <li
             onClick={() => handlePageChange("viewLeave")}
             style={menuItemStyle("viewLeave")}
           >
             {isSidebarOpen && "Leave"}
+          </li>
+          <li
+            onClick={() => handlePageChange("holidays")}
+            style={menuItemStyle("holidays")}
+          >
+            {isSidebarOpen && "Holidays"}
           </li>
           <li
             onClick={() => handlePageChange("performancereview")}
@@ -396,6 +410,7 @@ function EmployeeDashboard() {
           {activePage === 'profile' && <EmployeeProfile />}
           {activePage === 'markAttendance' && <MarkAttendance />}
           {activePage === 'monthlyAttendance' && <EmployeeMonthlyAttendance />}
+          {activePage === 'monthlyReport' && <EmployeeMonthlyReport />}
           {activePage === 'viewLeave' && <ViewLeave />}
           {activePage === 'performancereview' && <PerformanceReview />}
           {activePage === 'performancereport' && <EmployeeReport />}
@@ -410,7 +425,7 @@ function EmployeeDashboard() {
           {activePage === 'finalstatus' && <FinalSettlementStatus />}{/* Add this line */}
           {activePage === 'payout' && <Payout />}{/* Add this line */}
           {activePage === 'vacant' && <VacantPositions />}
-
+          {activePage ===  'holidays' && <Holidays/>}
 
           {activePage === 'traininglist' && <EmpTrainingList  loggedInEmployeeName={loggedInEmployeeName} loggedInEmployeeId={loggedInEmployeeId} employeeData={employeeData} />}
           {activePage === 'exploretraining' && <EmployeeTrainingTypes  loggedInEmployeeName={loggedInEmployeeName} loggedInEmployeeId={loggedInEmployeeId} employeeData={employeeData} />}

@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "iiiqbetshrms",
+    "staging": "iiiqbetshrms",
+    "Staging": "iiiqbetshrms"
+  },
+  "targets": {},
+  "etags": {}
+}

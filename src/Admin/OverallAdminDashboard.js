@@ -92,15 +92,15 @@ function OverallDashboard({ setActivePage }) {
               marginBottom: '20px',
               cursor: 'pointer',
               textAlign: 'center',
-              backgroundColor: 'white',
+              backgroundColor: '#9f9f9f',
               borderRadius: '20px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               transition: 'background-color 0.3s ease',
             }}>
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                 HR Operation
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
                 {/* ${totalBudget} */}
               </span>
             </div>
@@ -132,15 +132,15 @@ function OverallDashboard({ setActivePage }) {
               marginBottom: '20px',
               cursor: 'pointer',
               textAlign: 'center',
-              backgroundColor: 'white',
+              backgroundColor: '#9f9f9f',
               borderRadius: '20px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               transition: 'background-color 0.3s ease',
             }}>
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                 Payroll
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
                 {/* ${totalBudget} */}
               </span>
             </div>
@@ -174,15 +174,15 @@ function OverallDashboard({ setActivePage }) {
               marginBottom: '20px',
               cursor: 'pointer',
               textAlign: 'center',
-              backgroundColor: 'white',
+              backgroundColor: '#9f9f9f',
               borderRadius: '20px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               transition: 'background-color 0.3s ease',
             }}>
-              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: '#182566' }}>
+              <h4 style={{ marginBottom: '10px', fontSize: '20px', fontWeight: 'bold', color: 'white' }}>
                 Performance Management
               </h4>
-              <span style={{ fontSize: '25px', fontWeight: 'bold', color: '#182566' }}>
+              <span style={{ fontSize: '25px', fontWeight: 'bold', color: 'white' }}>
                 {/* ${totalBudget} */}
               </span>
             </div>

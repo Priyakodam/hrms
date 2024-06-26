@@ -56,36 +56,36 @@ function Payslip() {
               </tr>
             </thead>
             <tbody>
-              {employeeData.payslips && employeeData.payslips.length > 0 ? (
-                employeeData.payslips.map((payslip, index) => (
-                  <tr key={payslip.id || index}>
-                     <td>{index + 1}</td> 
-                    <td>{employeeData.employeeId}</td>
-                    <td>{employeeData.fullName}</td>
-                    <td>{employeeData.role}</td>
-                    <td>{employeeData.date}</td>
-                    <td>{payslip.grossSalary}</td>
-                    <td>{payslip.netSalary}</td>
-                    <td>{payslip.totalDeductions}</td>
-                    <td>
-                      {employeeData.pdfUrl && (
-                        <a
-                          href={employeeData.pdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          Link
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8">No payslip data available</td>
-                </tr>
-              )}
-            </tbody>
+  {employeeData.payslips && employeeData.payslips.length > 0 ? (
+    employeeData.payslips.map((payslip, index) => (
+      <tr key={payslip.id || index}>
+        <td>{index + 1}</td> 
+        <td>{employeeData.employeeId}</td>
+        <td>{employeeData.fullName}</td>
+        <td>{employeeData.role}</td>
+        <td>{employeeData.date}</td>
+        <td>{payslip.grossSalary}</td>
+        <td>{payslip.netSalary}</td>
+        <td>{payslip.totalDeductions}</td>
+        <td>
+          {employeeData.pdfUrl && (
+            <a
+              href={employeeData.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Link
+            </a>
+          )}
+        </td>
+      </tr>
+    ))
+  ) : (
+    <tr>
+      <td colSpan="8">No payslip data available</td>
+    </tr>
+  )}
+</tbody>
           </table>
         </>
       )}

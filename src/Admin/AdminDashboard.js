@@ -39,6 +39,8 @@ import Policy from "./Policy";
 import ExitProcedure from "./ExitProcedure";
 import AnnualBudget from "./AnnualBudget";
 import OverallTandDDashboard from "./OverallTandDDashboard";
+import Holidays from "./Holidays";
+import MonthlyReport from "./MonthlyReport";
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -107,7 +109,7 @@ function AdminDashboard() {
     resetAllDropdowns();
     
     // Add logic to open relevant dropdown based on the selected page
-    if (page.includes("dailyattendance") || page === "employeemonthlyreport" || page === "employeedailyattendance"|| page === "employeeleaveapplication"|| page === "addleavetype") {
+    if (page.includes("dailyattendance") || page === "employeemonthlyreport"|| page === "monthlyreport" || page === "employeedailyattendance"|| page === "employeeleaveapplication"|| page === "addleavetype"|| page === "holidays") {
       setShowAttendanceDropdown(true);
     } else if (page.includes("MonthlyAttendance") || page === "managermonthlyattendancereport" || page === "employeemonthlyreport") {
       setShowMonthlyAttendanceDropdown(true);
@@ -284,13 +286,19 @@ function AdminDashboard() {
           onClick={(e) => { e.stopPropagation(); handlePageChange("employeedailyattendance"); }}
           style={{ ...menuItemStyle("employeedailyattendance"), color: activePage === "employeedailyattendance" ? "#182566" : "black", backgroundColor: activePage === "employeedailyattendance" ? "white" : "transparent" }}
         >
-          DailyAttendance
+          Daily Attendance
         </li>
         <li
           onClick={(e) => { e.stopPropagation(); handlePageChange("employeemonthlyreport"); }}
           style={{ ...menuItemStyle("employeemonthlyreport"), color: activePage === "employeemonthlyreport" ? "#182566" : "black", backgroundColor: activePage === "employeemonthlyreport" ? "white" : "transparent" }}
         >
-          MonthlyAttendance
+          Monthly Attendance
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("monthlyreport"); }}
+          style={{ ...menuItemStyle("monthlyreport"), color: activePage === "monthlyreport" ? "#182566" : "black", backgroundColor: activePage === "monthlyreport" ? "white" : "transparent" }}
+        >
+          Monthly Report
         </li>
         <li
           onClick={(e) => { e.stopPropagation(); handlePageChange("employeeleaveapplication"); }}
@@ -303,6 +311,12 @@ function AdminDashboard() {
           style={{ ...menuItemStyle("addleavetype"), color: activePage === "addleavetype" ? "#182566" : "black", backgroundColor: activePage === "addleavetype" ? "white" : "transparent" }}
         >
           Leave Type
+        </li>
+        <li
+          onClick={(e) => { e.stopPropagation(); handlePageChange("holidays"); }}
+          style={{ ...menuItemStyle("holidays"), color: activePage === "holidays" ? "#182566" : "black", backgroundColor: activePage === "holidays" ? "white" : "transparent" }}
+        >
+          Holidays
         </li>
       </div>
     </div>
@@ -530,7 +544,7 @@ function AdminDashboard() {
           )}
           
           {activePage === "addleavetype" && <AddLeaveType />}
-
+          {activePage ==='holidays' && <Holidays/>}
 
           {/* {activePage === "leavedashboard" && (
             <LeavesDashboard  setActivePage={handlePageChange}/>
@@ -544,9 +558,13 @@ function AdminDashboard() {
           {activePage === "managermonthlyattendancereport" && (
             <ManagerMonthlyAttendanceReport />
           )}
+          
           {activePage === "metricslist" && <MetricsList />}
           {activePage === "employeemonthlyreport" && (
             <EmployeeMonthlyAttendanceReport />
+          )}
+          {activePage === "monthlyreport" && (
+            <MonthlyReport />
           )}
           {activePage === "employeeexpenses" && <EmployeeExpenses />}
 

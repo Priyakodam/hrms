@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { getDoc, doc } from 'firebase/firestore';
 import { db, auth } from './App';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from './ContextApi/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import './Login.css';
+import logo from './Img/logohrms.png';
 
 function Login() {
+  const { loginUser } = useContext(AuthContext);
   const history = useNavigate();
 
   const [email, setEmail] = useState('');
@@ -63,6 +67,7 @@ function Login() {
       } else {
         setErrorMsg('Invalid email or password. Please try again.');
       }
+      loginUser(userData);
     } catch (error) {
       console.error('Firebase login error:', error.code, error.message);
       setErrorMsg('Invalid email or password. Please try again.');
@@ -73,57 +78,60 @@ function Login() {
   
 
   return (
-    <div className="container mt-5">
-      <div className="row">
-        <div className="col-md-3"></div>
-        <div className="col-md-6">
-          <h2 className="text-center mb-4">Login</h2>
-          <form onSubmit={handleLogin}>
-            <div className="mb-3">
-              <label htmlFor="email" className="form-label">
-                Email
-              </label>
-              <input
-                type="email"
-                className="form-control"
-                id="email"
-                name="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
-                required
-              />
-            </div>
-            <div className="mb-3" style={{ position: 'relative' }}>
-        <label htmlFor="password" className="form-label" style={{ display: 'block', marginBottom: '5px' }}>
-          Password
-        </label>
-        <input
-          type={showPassword ? "text" : "password"}
-          className="form-control"
-          id="password"
-          name="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px' }}
-          required
-        />
-        <i
-          onClick={togglePasswordVisibility}
-          style={{ position: 'absolute', right: '10px', top: '40px', cursor: 'pointer' }}
-        >
-          <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-        </i>
-      </div>
-            {errorMsg && <div className="text-danger">{errorMsg}</div>}
-            <div className="text-center">
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                {isSubmitting ? 'Logging in...' : 'Login'}
-              </button>
-            </div>
-          </form>
+    <div className="container-fluid d-flex justify-content-center align-items-center min-vh-100" id='loginpage'>
+    <div className="row border rounded-5 p-3 bg-white shadow box-area">
+      <div className="col-md-6 rounded-4 d-flex justify-content-center align-items-center flex-column left-box" style={{ background: '#103cbe' }}>
+        <div className="featured-image mb-3">
+          <img src={logo} alt="Logo" className="img-fluid" style={{ width: '250px' }} />
         </div>
-        <div className="col-md-3"></div>
+        <p className="text-white fs-2" style={{ fontFamily: "'Courier New', Courier, monospace", fontWeight: 600 }}>Be Verified</p>
+        <small className="text-white text-wrap text-center" style={{ width: '17rem', fontFamily: "'Courier New', Courier, monospace" }}>iiiQ Digital Transformational Services</small>
+      </div>
+      <div className="col-md-6 right-box">
+        <div className="row align-items-center">
+          <div className="header-text mb-4">
+            <h2 className='text-center'>Login</h2>
+            <p className='text-center'>Access to our dashboard</p>
+          </div>
+          <form onSubmit={handleLogin}>
+              <div className="input-group mb-3">
+               
+                <input
+                  type="email"
+                  className="form-control form-control-lg bg-light fs-6"
+                  id="email"
+                  name="email"
+                  value={email}
+                  placeholder='  Email address'
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="input-group mb-3">
+  <input
+    type={showPassword ? "text" : "password"}
+    className="form-control form-control-lg bg-light fs-6"
+    id="password"
+    name="password"
+    value={password}
+    placeholder="Password"
+    onChange={(e) => setPassword(e.target.value)}
+    required
+  />
+  <span className="input-group-text" onClick={togglePasswordVisibility} style={{ cursor: 'pointer' }}>
+    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+  </span>
+</div>
+
+              {errorMsg && <div className="alert alert-danger">{errorMsg}</div>}
+             
+              <div className='input-group mb-3'>
+              <button type="submit" className="btn btn-primary w-100" disabled={isSubmitting}>
+                {isSubmitting ? 'Logging in...' : 'Login'}
+              </button></div>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,13 @@
 // ExpenseReportsTable.js
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, updateDoc } from 'firebase/firestore';
 import { db } from './App';
 import { Modal, Button } from 'react-bootstrap';
 import Expenses from './Expenses';
+import { doc, deleteDoc,getDoc } from 'firebase/firestore';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 function ExpenseReportsTable() {
   const location = useLocation();
@@ -37,7 +40,38 @@ function ExpenseReportsTable() {
       setCurrentPage(currentPage + 1);
     }
   }
-
+  const handleDelete = async (reportId) => {
+    if (!window.confirm("Are you sure you want to delete this expense report?")) {
+      return;
+    }
+  
+    try {
+      // Delete the expense report from the current employee's collection
+      await deleteDoc(doc(db, `expenses_${loggedInEmployeeId}`, reportId));
+  
+      // Fetch the current employee's document to get the assigned manager's UID
+      const employeeDoc = await getDoc(doc(db, 'users', loggedInEmployeeId));
+      if (employeeDoc.exists()) {
+        const managerUid = employeeDoc.data().assignedManagerUid;
+        if (managerUid) {
+          // Assuming you want to delete the same report from the manager's collection
+          // Adjust the collection name or path as needed
+          await deleteDoc(doc(db, `expenses_${managerUid}`, reportId));
+        } else {
+          console.log("Manager UID not found for the employee.");
+        }
+      } else {
+        console.log("Employee document does not exist.");
+      }
+  
+      // Update the local state to reflect the deletion
+      setExpenseReports(expenseReports.filter(report => report.id !== reportId));
+    } catch (error) {
+      console.error("Error deleting expense report:", error);
+    }
+  };
+  
+  
 
   useEffect(() => {
     const fetchExpenseReports = async () => {
@@ -85,7 +119,7 @@ function ExpenseReportsTable() {
                 <th>Description</th>
                 <th>Receipt URL</th>
                 <th>Status</th>
-                
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -102,7 +136,12 @@ function ExpenseReportsTable() {
                     </a>
                   </td>
                   <td style={{ ...getStatusStyle(report.status) }}>{report.status}</td>
-                  
+                  <td>
+                  <button className="btn btn-danger" onClick={() => handleDelete(report.id)}>
+  <FontAwesomeIcon icon={faTrash} />
+</button>
+
+                  </td>
                 </tr>
               ))}
             </tbody>
